@@ -1,5 +1,6 @@
 name: "3-Deployment"
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       environment:
