@@ -29,6 +29,7 @@ jobs:
       id-token: write
 
   deploy-staging:    
+    needs: [delivery]
     runs-on: ubuntu-latest
     steps:
       - name: Get Render Service URL (Staging)
