@@ -34,6 +34,7 @@ jobs:
     environment: Staging    
     steps:
       - name: Get Render Service URL (Staging)
+        id: get-url
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
           SERVICE_ID: ${{ env.SERVICE_ID_STAGING }}
@@ -46,11 +47,9 @@ jobs:
 
       - name: Show URL in Job Summary
         run: |
-          echo "### ✅ Deployment URL" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Staging Deployment URL" >> $GITHUB_STEP_SUMMARY
           echo "Abrir aplicación" >> $GITHUB_STEP_SUMMARY
-        env:
-          URL: ${{ steps.get-url.outputs.render_url }}
-          
+
   deploy-production:
     needs: [deploy-staging]
     runs-on: ubuntu-latest
