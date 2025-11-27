@@ -12,6 +12,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  SERVICE_ID_STAGING: srv-d4k9gvqli9vc73dkdkag
 
 jobs:
   integration:
@@ -27,14 +28,19 @@ jobs:
       packages: write
       id-token: write
 
-  deploy-staging:
-    needs: [delivery]
+  deploy-staging:    
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Render Deployment (Staging)
+      - name: Get Render Service URL (Staging)
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          SERVICE_ID: your-staging-service-id
         run: |
-          echo "✅ Image pushed to GHCR for Staging."
-          echo "Render will automatically build and deploy from the repo using Dockerfile."
+          echo "🔍 Fetching Render URL for Staging..."
+          URL=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" \
+            https://api.render.com/v1/services/$SERVICE_ID | jq -r '.service.url')
+          echo "✅ Staging URL: $URL"
+          echo "render_url=$URL" >> $GITHUB_OUTPUT
 
   deploy-production:
     needs: [deploy-staging]
