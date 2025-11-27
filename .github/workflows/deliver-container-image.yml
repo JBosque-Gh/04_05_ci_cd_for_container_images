@@ -60,7 +60,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4.4.0
         with:
-          images: ${{ env.REGISTRY }}/ ${{ env.IMAGE_NAME_SANITIZED }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_SANITIZED }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
