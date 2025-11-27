@@ -1,16 +1,13 @@
+
 name: "3-Deployment"
+
 on:
-  workflow_call:
-    inputs:
-      environment:
-        required: true
-        type: string
   workflow_dispatch:
     inputs:
       environment:
         required: true
         type: choice
-        description: Enter the target environment for the deployment
+        description: Select target environment
         options:
         - Staging
         - Production
@@ -21,84 +18,30 @@ env:
 
 jobs:
   build:
-    environment:
-      name: ${{ inputs.environment }}
-      url: ${{ vars.URL }}
     runs-on: ubuntu-latest
     permissions:
-      packages: read
+      packages: write
     concurrency:
       group: deploy-${{ inputs.environment }}
       cancel-in-progress: false
     steps:
-      - name: Check if secrets are available
-        run: |
-           if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-             echo "AWS_ACCESS_KEY_ID is missing"
-             exit 1
-           fi
-             if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-               echo "AWS_SECRET_ACCESS_KEY is missing"
-               exit 1
-             fi      
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin        
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Deploy staging with push to ECR
-        if: ${{ inputs.environment }} == 'Staging'
-        id: push
+      - name: Build Docker image
         run: |
           IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          docker pull ${{ env.REGISTRY }}/$IMAGE_NAME_LOWER:main
-          docker tag ${{ env.REGISTRY }}/$IMAGE_NAME_LOWER:main ${{ secrets.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}
-          docker push ${{ secrets.AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com/${{ github.event.repository.name }}
+          docker build -t ${{ env.REGISTRY }}/$IMAGE_NAME_LOWER:latest .
 
-      - name: Deploy production with aws CLI
-        if: ${{ inputs.environment }} == 'Production'
+      - name: Push Docker image to GHCR
         run: |
-          aws apprunner start-deployment --service-arn="${{ vars.SERVICE_ARN }}"
+          IMAGE_NAME_LOWER=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          docker push ${{ env.REGISTRY }}/$IMAGE_NAME_LOWER:latest
 
-      - name: Wait for Deployment to Begin
+      - name: Notify Render Deployment
         run: |
-          STATUS=$(aws apprunner describe-service --query="Service.Status" --output=text --service-arn="${{ vars.SERVICE_ARN }}")
-
-          until [ "${STATUS}" == "OPERATION_IN_PROGRESS" ];
-          do
-            echo "$(date) ${STATUS}"
-            STATUS=$(aws apprunner describe-service --query="Service.Status" --output=text --service-arn="${{ vars.SERVICE_ARN }}")
-            sleep 10;
-          done
-
-      - name: Wait for Deployment to Complete
-        id: status
-        timeout-minutes: 10
-        run: |
-          STATUS=$(aws apprunner describe-service --query="Service.Status" --output=text --service-arn="${{ vars.SERVICE_ARN }}")
-
-          while [ "${STATUS}" == "OPERATION_IN_PROGRESS" ];
-          do
-            echo "$(date) ${STATUS}"
-            STATUS=$(aws apprunner describe-service --query="Service.Status" --output=text --service-arn="${{ vars.SERVICE_ARN }}")
-            sleep 30;
-          done
-          echo "deployment_status=${STATUS}" >> "$GITHUB_OUTPUT"
-
-      - name: Check Deployment Status
-        id: check
-        run: |
-          if [ "${{ steps.status.outputs.deployment_status }}" == "RUNNING" ]; then
-            echo "Deployment successful"
-          else
-            echo "Deployment failed: ${{ steps.status.outputs.deployment_status }}"
-            exit 1
-          fi
+          echo "Image pushed to GHCR for ${{ inputs.environment }} environment."
+          echo "Render will automatically build and deploy from the repo using Dockerfile."
