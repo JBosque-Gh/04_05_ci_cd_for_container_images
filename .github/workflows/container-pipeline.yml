@@ -1,23 +1,16 @@
-name: "0-Container Deployment Pipeline"
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
+name: "0-Container Deployment Pipeline"
 
 on:
   push:
     branches: [ "main" ]
-    # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
 env:
-  # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -36,18 +29,18 @@ jobs:
 
   deploy-staging:
     needs: [delivery]
-    uses: ./.github/workflows/deploy-aws-app-runner.yml
-    with:
-      environment: Staging
-    permissions:
-      packages: read
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Render Deployment (Staging)
+        run: |
+          echo "✅ Image pushed to GHCR for Staging."
+          echo "Render will automatically build and deploy from the repo using Dockerfile."
 
   deploy-production:
     needs: [deploy-staging]
-    uses: ./.github/workflows/deploy-aws-app-runner.yml
-    with:
-      environment: Production
-    permissions:
-      packages: read
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Render Deployment (Production)
+        run: |
+          echo "✅ Image pushed to GHCR for Production."
+          echo "Render will automatically build and deploy from the repo using Dockerfile."
