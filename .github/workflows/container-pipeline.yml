@@ -22,7 +22,7 @@ jobs:
 
   delivery:
     needs: [integration]
-    uses: ./.github/workflows/deliver-container-image.yml
+    uses: ./.github/workflows/
     permissions:
       contents: read
       packages: write
@@ -31,6 +31,7 @@ jobs:
   deploy-staging:    
     needs: [delivery]
     runs-on: ubuntu-latest
+    environment: Staging    
     steps:
       - name: Get Render Service URL (Staging)
         env:
@@ -46,6 +47,7 @@ jobs:
   deploy-production:
     needs: [deploy-staging]
     runs-on: ubuntu-latest
+    environment: Production    
     steps:
       - name: Notify Render Deployment (Production)
         run: |
