@@ -14,6 +14,8 @@ env:
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
   IMAGE_NAME: ${{ github.repository }}
+  # Url Valida para ender
+  IMAGE_NAME_SANITIZED: jbosque-gh/04-05-ci-cd-for-container-images
 
 jobs:
   build:
@@ -58,7 +60,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4.4.0
         with:
-          images: ${{ env.REGISTRY }}/jbosque-gh/04-05-ci-cd-for-container-images
+          images: ${{ env.REGISTRY }}/ ${{ env.IMAGE_NAME_SANITIZED }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
