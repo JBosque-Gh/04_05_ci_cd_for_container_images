@@ -35,11 +35,11 @@ jobs:
       - name: Get Render Service URL (Staging)
         env:
           RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-          SERVICE_ID: your-staging-service-id
+          SERVICE_ID: ${{ env.SERVICE_ID_STAGING }}
         run: |
           echo "🔍 Fetching Render URL for Staging..."
           URL=$(curl -s -H "Authorization: Bearer $RENDER_API_KEY" \
-            https://api.render.com/v1/services/$SERVICE_ID | jq -r '.service.url')
+            https://api.render.com/v1/services/$SERVICE_ID | jq -r '.serviceDetails.url')
           echo "✅ Staging URL: $URL"
           echo "render_url=$URL" >> $GITHUB_OUTPUT
 
