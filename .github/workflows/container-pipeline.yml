@@ -46,9 +46,9 @@ jobs:
           echo "render_url=$URL" >> $GITHUB_OUTPUT
 
       - name: Show URL in Job Summary
-        run: |
+        run: |          
           echo "### ✅ Staging Deployment URL" >> $GITHUB_STEP_SUMMARY
-          echo "Abrir aplicación" >> $GITHUB_STEP_SUMMARY
+          echo "[Abrir aplicación >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
     needs: [deploy-staging]
