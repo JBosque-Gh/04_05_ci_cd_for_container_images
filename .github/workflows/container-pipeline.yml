@@ -44,6 +44,13 @@ jobs:
           echo "✅ Staging URL: $URL"
           echo "render_url=$URL" >> $GITHUB_OUTPUT
 
+      - name: Show URL in Job Summary
+        run: |
+          echo "### ✅ Deployment URL" >> $GITHUB_STEP_SUMMARY
+          echo "Abrir aplicación" >> $GITHUB_STEP_SUMMARY
+        env:
+          URL: ${{ steps.get-url.outputs.render_url }}
+          
   deploy-production:
     needs: [deploy-staging]
     runs-on: ubuntu-latest
