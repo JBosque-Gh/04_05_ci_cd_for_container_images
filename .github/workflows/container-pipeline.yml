@@ -31,7 +31,9 @@ jobs:
   deploy-staging:    
     needs: [delivery]
     runs-on: ubuntu-latest
-    environment: Staging    
+    environment: 
+      name: Staging
+      url: ${{ steps.get-url.outputs.render_url }}
     steps:
       - name: Get Render Service URL (Staging)
         id: get-url
